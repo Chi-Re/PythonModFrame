@@ -1,0 +1,8 @@
+displayName: "Python模组前置"
+name: "python-mod"
+author: "炽热S"
+main: "chire.PythonJavaMod"
+description: "Python的前置模组，可以加载py代码。"
+version: 1.0.0
+minGameVersion: 136
+java: true
