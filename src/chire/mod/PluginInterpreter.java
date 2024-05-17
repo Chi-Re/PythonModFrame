@@ -80,7 +80,7 @@ public class PluginInterpreter extends FileOperation implements General{
         try {
             bundleOperation(bundlesDirectory);
         } catch (Throwable e){
-            errors.add(new ErrorData(config, e, e instanceof ArcRuntimeException));
+            pyMods.addError(new ErrorData(config, e, e instanceof ArcRuntimeException));
         }
     }
 

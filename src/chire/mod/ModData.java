@@ -8,8 +8,7 @@ import arc.struct.Seq;
 import chire.func.Fun;
 import mindustry.ctype.UnlockableContent;
 
-import static chire.PythonJavaMod.enabled;
-import static chire.PythonJavaMod.modContents;
+import static chire.PythonJavaMod.pyMods;
 
 public class ModData {
     public Fi directory;
@@ -61,15 +60,19 @@ public class ModData {
     }
 
     public boolean enabled(){
-        return enabled.size > 0 && enabled.get(this.name) && enabled != null;
+        if (pyMods.enabled().get(this.name) == null) {
+            pyMods.setEnabled(this, true);
+            return true;
+        }
+        return pyMods.EnabledSize() > 0 && pyMods.enabled().get(this.name) && pyMods.enabled() != null;
     }
 
     public Seq<UnlockableContent> getContent(){
-        return modContents.get(this);
+        return pyMods.contents().get(this);
     }
 
     public boolean any(){
-        return modContents.get(this) != null && modContents.get(this).any();
+        return pyMods.contents().get(this) != null && pyMods.contents().get(this).any();
     }
 
     @Override

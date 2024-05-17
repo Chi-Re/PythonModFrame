@@ -2,8 +2,9 @@ package chire.mod.error;
 
 import arc.util.Strings;
 import chire.mod.ModData;
+import chire.mod.PyMods;
 
-import static chire.PythonJavaMod.hasError;
+import static chire.PythonJavaMod.pyMods;
 
 public class ErrorData {
     public ModData config;
@@ -24,7 +25,7 @@ public class ErrorData {
                     "\n\n[java]\n" + Strings.neatError(throwable));
         }
         this.fatal = fatal;
-        hasError = true;
+        PyMods.hasError = true;
     }
 
     @Override

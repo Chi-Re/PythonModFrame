@@ -34,7 +34,7 @@ public class PyModDialog extends BaseDialog {
         shown(this::setup);
 
         hidden(() -> {
-            if(requiresReload) reload();
+            if(pyMods.requiresReload()) reload();
         });
     }
 
@@ -45,7 +45,7 @@ public class PyModDialog extends BaseDialog {
         cont.clear();
         cont.defaults().width(Math.min(Core.graphics.getWidth() / Scl.scl(1.05f), 556f)).pad(4);
         //还没打算改这个
-        cont.add("@mod.reloadrequired").visible(requiresReload).center().get().setAlignment(Align.center);
+        cont.add("@mod.reloadrequired").visible(pyMods.requiresReload()).center().get().setAlignment(Align.center);
         cont.row();
 
         cont.table(buttons -> {
@@ -69,7 +69,7 @@ public class PyModDialog extends BaseDialog {
                         platform.showMultiFileChooser(file -> {
                             try{
                                 //mods.importMod(file);
-                                PyMods.importMod(file);
+                                pyMods.importMod(file);
                                 setup();
                             }catch(Exception e){
                                 ui.showException(e);
@@ -91,7 +91,7 @@ public class PyModDialog extends BaseDialog {
         cont.pane(p -> {
             p.clear();
 
-            for (var mod : interpreters.list()){
+            for (var mod : pyMods.getMods()){
                 //if (!mod.getConfig().enabled()) continue;
                 ModData item = mod.getConfig();
 
@@ -115,7 +115,7 @@ public class PyModDialog extends BaseDialog {
                         title1.table(text -> {
                             Log.info(item);
                             text.add("[accent]" + Strings.stripColors(item.name) + "\n" +
-                                    (mod.getConfig().description.length() > 0 ? "[lightgray]" + mod.getConfig().description + "\n" : "") +
+                                    (item.description.length() > 0 ? "[lightgray]" + item.description + "\n" : "") +
                                     (item.enabled() ? "" : Core.bundle.get("mod.disabled") + "")
                             ).wrap().top().width(300f).growX().left();
 
@@ -128,11 +128,12 @@ public class PyModDialog extends BaseDialog {
                     t.table(right -> {
                         right.right();
                         right.button(item.enabled() ? Icon.downOpen : Icon.upOpen, Styles.clearNonei, () -> {
-                            PyMods.setEnabled(item, !item.enabled());
+                            pyMods.setEnabled(item, !item.enabled());
                             setup();
                         }).size(50f);
 
                         right.button(Icon.trash, Styles.clearNonei, () -> {
+
                         }).size(50f);
                     }).growX().right().padRight(-8f).padTop(-8f);
                 }, Styles.flatBordert, () -> showMod(item)).size(w, h).growX().pad(4f);

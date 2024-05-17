@@ -2,7 +2,6 @@ package chire.util;
 
 import arc.Core;
 import arc.struct.ArrayMap;
-import arc.util.Log;
 import arc.util.serialization.JsonReader;
 import arc.util.serialization.JsonValue;
 

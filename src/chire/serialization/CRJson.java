@@ -1,11 +1,8 @@
 package chire.serialization;
 
-import arc.Core;
 import arc.files.Fi;
 import arc.util.serialization.JsonReader;
 import arc.util.serialization.JsonValue;
-
-import static chire.PythonJavaMod.settingName;
 
 public class CRJson {
     private String content = "";

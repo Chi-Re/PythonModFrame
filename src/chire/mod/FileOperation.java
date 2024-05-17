@@ -2,8 +2,16 @@ package chire.mod;
 
 import arc.Core;
 import arc.files.Fi;
+import arc.graphics.Pixmap;
+import arc.graphics.Pixmaps;
+import arc.graphics.Texture;
+import arc.graphics.g2d.TextureRegion;
 import arc.struct.Seq;
+import arc.util.Log;
 import arc.util.io.PropertiesUtils;
+import chire.PythonJavaMod;
+
+import static chire.PythonJavaMod.pyMods;
 
 /**
  * 方便更改关于读取文件的数据<br>
@@ -24,12 +32,41 @@ public abstract class FileOperation {
         spriteOperation(directory, true);
     }
 
-    public void spriteOperation(Seq<Fi> fis, boolean prefix) {
-        PyMods.setSprite(fis, prefix);
+    public void spriteOperation(Seq<Fi> fis) {
+        spriteOperation(fis, true);
     }
 
-    public void spriteOperation(Seq<Fi> fis) {
-        PyMods.setSprite(fis, true);
+    public void spriteOperation(Seq<Fi> sprites, boolean prefix){
+        boolean bleed = Core.settings.getBool("linear", true) && !PythonJavaMod.core.meta.pregenerated;
+        //解除限制(?)
+        float textureScale = PythonJavaMod.core.meta.texturescale;
+
+        for(Fi file : sprites) {
+            String name = file.nameWithoutExtension();
+
+            if(!prefix && !Core.atlas.has(name)){
+                Log.warn("mod中的 '@' 贴图 '@' 试图覆盖游戏中不存在的贴图，这不脱裤子放屁吗？", name, PythonJavaMod.core.name);
+                continue;
+            }else if(prefix && !PythonJavaMod.core.meta.keepOutlines && name.endsWith("-outline") && file.path().contains("units") && !file.path().contains("blocks")){
+                Log.warn("mod中的 '@' 精灵 '@' 很可能是一个不必要的单位轮廓。这些不应该是单独的贴图，忽略.", name, PythonJavaMod.core.name);
+                continue;
+            }
+
+            try{
+                Pixmap pix = new Pixmap(file.readBytes());
+                if(bleed){
+                    Pixmaps.bleed(pix, 2);
+                }
+
+                String fullName = (prefix ? PythonJavaMod.core.name + "-" : "") + name;
+
+                Core.atlas.addRegion(fullName, new TextureRegion(new Texture(file)));
+
+                pix.dispose();
+            }catch(Error e){
+                throw new Error(e);
+            }
+        }
     }
 
     public void bundleOperation(Fi directory) throws Throwable {

@@ -52,7 +52,7 @@ public class ModInterpreter extends FileOperation implements General {
             spriteOperation(sprite, true);
             spriteOperation(override, false);
         } catch (Throwable e){
-            errors.add(new ErrorData(config, e, e instanceof ArcRuntimeException));
+            pyMods.addError(new ErrorData(config, e, e instanceof ArcRuntimeException));
         }
     }
 
@@ -63,7 +63,7 @@ public class ModInterpreter extends FileOperation implements General {
         try {
             bundleOperation(bundlesDirectory);
         } catch (Throwable e){
-            errors.add(new ErrorData(config, e, e instanceof ArcRuntimeException));
+            pyMods.addError(new ErrorData(config, e, e instanceof ArcRuntimeException));
         }
     }
 
