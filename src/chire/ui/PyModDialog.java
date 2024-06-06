@@ -93,7 +93,6 @@ public class PyModDialog extends BaseDialog {
 
             for (var mod : pyMods.getMods()){
                 //if (!mod.getConfig().enabled()) continue;
-                ModData item = mod.getConfig();
 
                 p.button(t -> {
                     t.top().left();
@@ -104,8 +103,8 @@ public class PyModDialog extends BaseDialog {
                         title1.left();
 
                         title1.add(new BorderImage(){{
-                            if(item.iconTexture != null && item.iconTexture.get() != null){
-                                setDrawable(item.iconTexture.get());
+                            if(mod.iconTexture != null && mod.iconTexture.get() != null){
+                                setDrawable(mod.iconTexture.get());
                             }else{
                                 setDrawable(Tex.nomap);
                             }
@@ -113,10 +112,10 @@ public class PyModDialog extends BaseDialog {
                         }}).size(h - 8f).padTop(-8f).padLeft(-8f).padRight(8f);
 
                         title1.table(text -> {
-                            Log.info(item);
-                            text.add("[accent]" + Strings.stripColors(item.name) + "\n" +
-                                    (item.description.length() > 0 ? "[lightgray]" + item.description + "\n" : "") +
-                                    (item.enabled() ? "" : Core.bundle.get("mod.disabled") + "")
+                            Log.info(mod);
+                            text.add("[accent]" + Strings.stripColors(mod.name) + "\n" +
+                                    (mod.description.length() > 0 ? "[lightgray]" + mod.description + "\n" : "") +
+                                    (mod.enabled() ? "" : Core.bundle.get("mod.disabled") + "")
                             ).wrap().top().width(300f).growX().left();
 
                             text.row();
@@ -127,8 +126,8 @@ public class PyModDialog extends BaseDialog {
 
                     t.table(right -> {
                         right.right();
-                        right.button(item.enabled() ? Icon.downOpen : Icon.upOpen, Styles.clearNonei, () -> {
-                            pyMods.setEnabled(item, !item.enabled());
+                        right.button(mod.enabled() ? Icon.downOpen : Icon.upOpen, Styles.clearNonei, () -> {
+                            pyMods.setEnabled(mod, !mod.enabled());
                             setup();
                         }).size(50f);
 
@@ -136,7 +135,7 @@ public class PyModDialog extends BaseDialog {
 
                         }).size(50f);
                     }).growX().right().padRight(-8f).padTop(-8f);
-                }, Styles.flatBordert, () -> showMod(item)).size(w, h).growX().pad(4f);
+                }, Styles.flatBordert, () -> showMod(mod)).size(w, h).growX().pad(4f);
 
                 p.row();
             }

@@ -3,7 +3,6 @@ package chire.mod;
 import arc.Core;
 import arc.files.Fi;
 import arc.files.ZipFi;
-import arc.func.Boolf;
 import arc.struct.ArrayMap;
 import arc.struct.Seq;
 import arc.util.ArcRuntimeException;
@@ -14,29 +13,34 @@ import chire.ui.PyCore;
 import mindustry.ctype.Content;
 import mindustry.ctype.UnlockableContent;
 import mindustry.graphics.MultiPacker;
+import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static chire.PythonJavaMod.core;
-import static chire.PythonJavaMod.pyMods;
 import static mindustry.Vars.*;
 
 public class PyMods {
     /**所有的解释器，为了统一调用*/
-    private Seq<General> interpreters = new Seq<>();
+    private final Seq<General> interpreters = new Seq<>();
 
-    //public ArrayMap<String, ModData> mods = new ArrayMap<>();
+    public static final ArrayMap<String, ArrayMap<String, PyObject>> imports = new ArrayMap<>();
+
+    public Seq<ModData> mods = new Seq<>();
 
     /**是否存在报错*/
     public static boolean hasError = false;
     /**所有的报错*/
     private final Seq<ErrorData> errors = new Seq<>();
     /**所有模组的启用的情况*/
-    private final ArrayMap<String, Boolean> enabled = new ArrayMap<>();
+    //private final ArrayMap<String, Boolean> enabled = new ArrayMap<>();
     /**所有模组的内容*/
-    private final ArrayMap<ModData, Seq<UnlockableContent>> modContents = new ArrayMap<>();
+    //private final ArrayMap<ModData, Seq<UnlockableContent>> modContents = new ArrayMap<>();
 
     private boolean requiresReload = false;
     /**缓存用的，用来计算modContents的数据*/
@@ -85,7 +89,7 @@ public class PyMods {
         for (var inter : interpreters) {
             var config = inter.getConfig();
             if (getSetting(config.name)) try {
-                inter.run();
+                inter.run();//can't load this type of class file
                 inter.runLoad();
                 upModContent(config);
             } catch (Throwable e){
@@ -101,14 +105,14 @@ public class PyMods {
             if (getSetting(config.name)) try {
                 inter.runInit();
             } catch (Throwable e){
-                pyMods.addError(new ErrorData(config, e, e instanceof ArcRuntimeException));
+                addError(new ErrorData(config, e, e instanceof ArcRuntimeException));
             }
-
-            var er = pyMods.isError(config);
-            pyMods.addEnabled(config.name, getSetting(config.name) && !er);
+            var er = isError(config);
+            setEna(config, getSetting(config.name) && !er);
 
             if (er) {
-                modContents.removeKey(config);
+                //modContents.removeKey(config);
+                //removeMod(config);
                 inter.close();
             }
         }
@@ -116,30 +120,134 @@ public class PyMods {
 
     public void addMod(General interpreter){
         interpreters.add(interpreter);
+        mods.add(interpreter.getConfig());
+
+        //addImport(interpreter.getConfig().directory);
     }
 
     public void addMod(ModData data, PythonInterpreter inter){
-        interpreters.add(new ModInterpreter(data, inter));
+        addMod(new ModInterpreter(data, inter));
     }
 
-    public Seq<General> getMods(){
-        return interpreters;
+
+    //可以测试了，明天再说
+    protected void addImport(Fi modDirectory){
+        var mainPy = modDirectory.child("main.py");
+        if (!mainPy.exists()) return;
+
+        analysisFile(mainPy.readString(), mainPy, null);
+//        for (var c : mainPy.readString().split("\n")) {
+//            String aic = analysisImport(c);
+//            if (aic == null) continue;
+//
+//            var importFi = getImportFi(aic, modDirectory);
+//            if (importFi == null || imports.get(importFi.path()) != null) continue;
+//
+//            analysisFile(importFi.readString(), importFi, aic.substring(aic.lastIndexOf("/")+1));
+//        }
     }
 
-    public General getMod(Boolf<General> predicate){
-        return interpreters.find(predicate);
+    protected void analysisFile(String code, Fi fi, String logotype){
+        for (var c : code.split("\n")) {
+            String aic = analysisImport(c);
+            if (aic == null) continue;
+
+            //获取的要导入的文件路径
+            var importFi = getImportFi(aic, fi.parent());
+            if (importFi == null || imports.get(importFi.path()) != null) continue;
+
+            analysisFile(importFi.readString(), importFi, aic.substring(aic.lastIndexOf("/")+1));
+        }
+        if (logotype != null) imports.put(fi.path(), getPyVars(fi.readString(), logotype));
     }
 
-    public General getMod(ModData mod){
-        return getMod(f -> f.getConfig() == mod);
+    protected ArrayMap<String, PyObject> getPyVars(String code, String logotype){
+        PythonInterpreter interpreter = new PythonInterpreter();
+        //interpreter.exec("from chire.py.lib import Import");
+        interpreter.exec(code);
+        ArrayMap<String, PyObject> returnList = new ArrayMap<>();
+        if (Objects.equals(logotype, "*")) {
+            for (var l : new CRJson(
+                    interpreter.getLocals().toString().replaceAll("'", "")
+            ).parse()){
+                if (
+                    Objects.equals(l.name(), "__doc__") ||
+                    Objects.equals(l.name(), "__name__")
+                ) continue;
+                returnList.put(l.name(), interpreter.get(l.name()));
+            }
+        } else if (logotype.contains(",")) {
+
+        } else {
+            returnList.put(logotype, interpreter.get(logotype));
+        }
+        return returnList;
     }
 
-    public General getMod(String name){
-        return getMod(f -> Objects.equals(f.getConfig().name, name));
+    protected Fi getImportFi(String importPath, Fi importDirectory){
+        importPath = importPath.replaceAll("\\.", "/");
+        String fp = importDirectory.path();
+        String ip = importPath.substring(0, importPath.lastIndexOf("/"));
+        while (true) {
+            if (fp.contains(ip) && (fp.lastIndexOf(ip)==(fp.length()-ip.length()))) {
+                return importDirectory.child(importPath.replace(ip+".", "")+".py");
+            }
+            if (ip.lastIndexOf(".") == -1){
+                return null;
+            }
+            ip = ip.substring(0, ip.lastIndexOf("/"));
+        }
     }
+
+    protected String analysisImport(String importStr){
+        Pattern fi = Pattern.compile("^(?i)\\s*from\s+(.*?)\s+import\s+(.*?)$");
+        Pattern i = Pattern.compile("^(?i)\\s*import\s+(.*?)$");
+        Matcher mat = fi.matcher(importStr);
+
+        String filePath = null;
+        if (mat.find()) {
+            filePath = mat.group(1)+"."+mat.group(2);
+        } else {
+            Matcher mati = i.matcher(importStr);
+            if (mati.find()) filePath = mati.group(1);
+        }
+        if (filePath == null) return null;
+
+        try {
+            Class.forName(filePath);
+            return null;
+        } catch (NullPointerException | ClassNotFoundException e) {
+            return filePath;
+        }
+    }
+
+    public Seq<ModData> getMods(){
+        return mods;
+    }
+
+    public ModData getMod(String name){
+        return mods.find(f -> Objects.equals(f.name, name));
+    }
+
+    public ModData getMod(int index){
+        return mods.get(index);
+    }
+
+    public int getMod(ModData config){
+        return mods.indexOf(config);
+    }
+
+//    public General getMod(ModData mod){
+//        return getMod(f -> f.getConfig() == mod);
+//    }
+//
+//    public General getMod(String name){
+//        return getMod(f -> Objects.equals(f.getConfig().name, name));
+//    }
 
     public void removeMod(ModData mod){
         interpreters.remove(f -> f.getConfig() == mod);
+        mods.remove(mod);
         //if (modContents)modContents.removeKey(mod);
     }
 
@@ -171,7 +279,8 @@ public class PyMods {
             for (var l : lastContent) lc.remove(l);
         }
         lastContent = lc;
-        modContents.put(config, lc);
+        //modContents.put(config, lc);
+        mods.each(i -> i == config, f -> f.setContents(lc));
     }
 
     public boolean isError(ModData modData){
@@ -217,9 +326,25 @@ public class PyMods {
             MultiPacker.PageType.main;
     }
 
-    public void setEnabled(ModData mod, boolean e){
+    /**内部设置启用状态，不会出现requiresReload=true的情况*/
+    private void setEna(ModData mod, boolean e){
         putSetting(mod.name, e);
-        enabled.put(mod.name, e);
+        //mods.add(mod);
+        //getMod(mod);
+        if (e) {
+            mods.each(f -> {
+                if (f == mod) f.setEnabled(true);
+            });
+        } else {
+            mods.remove(mod);
+            mod.setEnabled(false);
+            mods.add(mod);
+        }
+    }
+
+    /**外部调用设置启用的方法*/
+    public void setEnabled(ModData mod, boolean e){
+        setEna(mod, e);
         requiresReload = true;
     }
 
@@ -246,21 +371,5 @@ public class PyMods {
 
     public void addError(ErrorData error){
         errors.add(error);
-    }
-
-    public int EnabledSize(){
-        return enabled.size;
-    }
-
-    public ArrayMap<String, Boolean> enabled(){
-        return enabled;
-    }
-
-    public void addEnabled(String name, Boolean e){
-        enabled.put(name, e);
-    }
-
-    public ArrayMap<ModData, Seq<UnlockableContent>> contents(){
-        return modContents;
     }
 }

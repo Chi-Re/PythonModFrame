@@ -2,8 +2,10 @@ package chire;
 
 import arc.Core;
 import arc.graphics.g2d.TextureRegion;
+import arc.struct.ArrayMap;
 import arc.util.Log;
 import arc.util.Nullable;
+import chire.mod.PyModImport;
 import chire.mod.PyMods;
 import chire.ui.InfoDialog;
 import chire.ui.PyModDialog;
@@ -115,4 +117,12 @@ public class PythonJavaMod extends Mod{
     public static TextureRegion getTexture(String name){
         return Core.atlas.find(name);
     }
+
+//    public static void cleanup(){
+//        importInter = new PythonInterpreter();
+//    }
+//
+//    public static void delete(){
+//        importInter = null;
+//    }
 }

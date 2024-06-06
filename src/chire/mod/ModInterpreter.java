@@ -9,7 +9,7 @@ import org.python.util.PythonInterpreter;
 import static chire.PythonJavaMod.*;
 
 /**关于模组的解释器*/
-public class ModInterpreter extends FileOperation implements General {
+public class ModInterpreter extends InterpreterOperation implements General {
     private final PythonInterpreter interpreter;
 
     private final ModData config;
@@ -25,9 +25,10 @@ public class ModInterpreter extends FileOperation implements General {
 
     @Override
     public void run() {
-        interpreter.exec("import sys");
-        interpreter.exec("sys.path.append('"+ config.directory.path() + "')");
-        interpreter.execfile(config.directory.child(config.main).path());
+        //interpreter.exec("import sys");
+        //interpreter.exec("sys.path.append('"+ config.directory.path() + "')");
+
+        interpreter.exec(importFile(config.directory.child(config.main), interpreter));
 
         init = getFun("init", interpreter);
         load = getFun("load", interpreter);

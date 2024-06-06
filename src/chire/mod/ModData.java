@@ -4,6 +4,7 @@ import arc.Core;
 import arc.files.Fi;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
+import arc.struct.ArrayMap;
 import arc.struct.Seq;
 import chire.func.Fun;
 import mindustry.ctype.UnlockableContent;
@@ -24,6 +25,11 @@ public class ModData {
     public Fun<TextureRegion> iconTexture;
 
     public String description = "";
+
+
+    private boolean enabled = true;
+
+    private Seq<UnlockableContent> contents = new Seq<>();
 
     public ModData(Fi directory, Fun<TextureRegion> icon, String name, String author, String version, String description, String main){
         load(directory, icon, name, author, version, description, main);
@@ -47,7 +53,6 @@ public class ModData {
         load(directory, () -> Core.atlas.find(iconName), name, author, version, description, main);
     }
 
-
     protected void load(Fi directory, Fun<TextureRegion> icon, String name, String author, String version, String description, String main){
         if (directory == null) throw new NullPointerException("模组文件夹路径为空");
         this.directory = directory;
@@ -60,19 +65,31 @@ public class ModData {
     }
 
     public boolean enabled(){
-        if (pyMods.enabled().get(this.name) == null) {
-            pyMods.setEnabled(this, true);
-            return true;
-        }
-        return pyMods.EnabledSize() > 0 && pyMods.enabled().get(this.name) && pyMods.enabled() != null;
+//        if (pyMods.enabled().get(this.name) == null) {
+//            pyMods.setEnabled(this, true);
+//            return true;
+//        }
+//        return pyMods.EnabledSize() > 0 && pyMods.enabled().get(this.name) && pyMods.enabled() != null;
+
+        return enabled;
+    }
+
+    public void setEnabled(boolean e){
+        this.enabled = e;
+    }
+
+    public void setContents(Seq<UnlockableContent> contents) {
+        this.contents = contents;
     }
 
     public Seq<UnlockableContent> getContent(){
-        return pyMods.contents().get(this);
+        //return pyMods.contents().get(this);
+        return contents;
     }
 
     public boolean any(){
-        return pyMods.contents().get(this) != null && pyMods.contents().get(this).any();
+        //return pyMods.contents().get(this) != null && pyMods.contents().get(this).any();
+        return contents.any();
     }
 
     @Override

@@ -4,10 +4,13 @@ import arc.graphics.Color;
 import arc.scene.ui.Dialog;
 import arc.scene.ui.layout.Collapser;
 import arc.util.Align;
+import arc.util.Log;
 import mindustry.ui.Styles;
 
 public class PyCore {
     public static void showException(String text, String exc){
+        Log.warn(text);
+        Log.warn(exc);
         new Dialog(""){{
             setFillParent(true);
             cont.margin(15);

@@ -11,10 +11,10 @@ import java.io.IOException;
 import static chire.PythonJavaMod.*;
 
 /**关于插件的解释器代码*/
-public class PluginInterpreter extends FileOperation implements General{
-    private final Fi pluginDirectory;
-
+public class PluginInterpreter extends InterpreterOperation implements General{
     private final PythonInterpreter interpreter;
+
+    private final Fi pluginDirectory;
 
     private PyFunction init;
 
@@ -32,14 +32,15 @@ public class PluginInterpreter extends FileOperation implements General{
 
     @Override
     public void run() throws IOException {
-        interpreter.exec("import sys");
-        interpreter.exec("sys.path.append('" + pluginDirectory.path() + "')");
+//        interpreter.exec("import sys");
+//        interpreter.exec("sys.path.append('" + pluginDirectory.path() + "')");
 
         Fi mainFile = pluginDirectory.child("main.py");
 
         if (!mainFile.exists()) mainFile.file().createNewFile();
 
-        interpreter.execfile(mainFile.path());
+        interpreter.exec(importFile(mainFile, interpreter));
+        //interpreter.execfile(mainFile.path());
 
         init = getFun("init", interpreter);
         load = getFun("load", interpreter);

@@ -1,7 +1,5 @@
 package chire.mod;
 
-import org.python.core.PyFunction;
-
 import java.io.IOException;
 
 public interface General {

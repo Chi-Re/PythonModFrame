@@ -6,12 +6,21 @@ import arc.graphics.Pixmap;
 import arc.graphics.Pixmaps;
 import arc.graphics.Texture;
 import arc.graphics.g2d.TextureRegion;
+import arc.struct.ArrayMap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.io.PropertiesUtils;
 import chire.PythonJavaMod;
+import chire.serialization.CRJson;
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.util.PythonInterpreter;
 
-import static chire.PythonJavaMod.pyMods;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 /**
  * 方便更改关于读取文件的数据<br>

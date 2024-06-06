@@ -31,6 +31,10 @@ public class CRJson {
         return new JsonReader().parse(content);
     }
 
+    public static String getName(JsonValue value){
+        return value.parent().get(value.name).toString();
+    }
+
     public String getStr(String name){
         try {
             return parse().getString(name);
